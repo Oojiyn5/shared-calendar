@@ -19,7 +19,7 @@
     <section class="calendar card" aria-label="월간 달력">
       <div class="month-nav">
         <button class="icon-btn" id="prevMonth" type="button" aria-label="이전 달">‹</button>
-        <h1 class="month-title" id="monthTitle">2026년 10월</h1>
+        <h1 class="month-title" id="monthTitle"></h1>
         <button class="icon-btn" id="nextMonth" type="button" aria-label="다음 달">›</button>
       </div>
 
@@ -31,35 +31,32 @@
 
     <aside class="day-panel card" aria-label="선택한 날짜의 일정">
       <div class="day-head">
-        <p class="day-label" id="dayLabel">10월 9일 금요일</p>
-        <span class="count" id="dayCount">일정 2개</span>
+        <p class="day-label" id="dayLabel"></p>
+        <span class="count" id="dayCount"></span>
       </div>
 
-      <ul class="event-list" id="eventList">
-        <li class="event">
-          <span class="dot" style="--c: var(--green)"></span>
-          <div class="event-body">
-            <p class="event-title">에너지시스템 수업</p>
-            <p class="event-time">10:00 – 11:30</p>
-          </div>
-        </li>
-        <li class="event">
-          <span class="dot" style="--c: var(--blue)"></span>
-          <div class="event-body">
-            <p class="event-title">팀 프로젝트 회의</p>
-            <p class="event-time">16:00 – 17:00</p>
-          </div>
-        </li>
-      </ul>
+      <ul class="event-list" id="eventList"></ul>
 
       <form class="add-form" id="addForm">
-        <input class="input" id="eventTitle" type="text" placeholder="새 일정 제목" autocomplete="off">
+        <input class="input" id="eventTitle" type="text" placeholder="새 일정 제목" autocomplete="off" maxlength="60" required>
+        <select class="input" id="eventCategory" aria-label="카테고리"></select>
         <div class="row">
           <input class="input" id="eventStart" type="time" aria-label="시작 시간">
           <input class="input" id="eventEnd" type="time" aria-label="끝 시간">
         </div>
+        <textarea class="input memo-input" id="eventMemo" rows="2" maxlength="500" placeholder="메모 (선택)"></textarea>
         <button class="btn btn-primary" type="submit">일정 추가</button>
       </form>
+
+      <section class="categories" aria-label="카테고리 관리">
+        <h2 class="section-title">카테고리</h2>
+        <ul class="cat-list" id="catList"></ul>
+        <form class="cat-form" id="catForm">
+          <input class="input" id="catName" type="text" placeholder="새 카테고리 이름 (예: 공부)" autocomplete="off" maxlength="12" required>
+          <div class="swatches" id="swatches" role="radiogroup" aria-label="카테고리 색"></div>
+          <button class="btn btn-ghost" type="submit">카테고리 추가</button>
+        </form>
+      </section>
     </aside>
   </main>
 
