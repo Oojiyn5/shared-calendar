@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>공유 캘린더</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">C</span>
+      <span class="brand-name">공유 캘린더</span>
+    </div>
+    <button class="btn btn-ghost" id="todayBtn" type="button">오늘</button>
+  </header>
+
+  <main class="layout">
+    <section class="calendar card" aria-label="월간 달력">
+      <div class="month-nav">
+        <button class="icon-btn" id="prevMonth" type="button" aria-label="이전 달">‹</button>
+        <h1 class="month-title" id="monthTitle">2026년 10월</h1>
+        <button class="icon-btn" id="nextMonth" type="button" aria-label="다음 달">›</button>
+      </div>
+
+      <div class="weekdays">
+        <span class="sun">일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span class="sat">토</span>
+      </div>
+      <div class="grid" id="calendarGrid"></div>
+    </section>
+
+    <aside class="day-panel card" aria-label="선택한 날짜의 일정">
+      <div class="day-head">
+        <p class="day-label" id="dayLabel">10월 9일 금요일</p>
+        <span class="count" id="dayCount">일정 2개</span>
+      </div>
+
+      <ul class="event-list" id="eventList">
+        <li class="event">
+          <span class="dot" style="--c: var(--green)"></span>
+          <div class="event-body">
+            <p class="event-title">에너지시스템 수업</p>
+            <p class="event-time">10:00 – 11:30</p>
+          </div>
+        </li>
+        <li class="event">
+          <span class="dot" style="--c: var(--blue)"></span>
+          <div class="event-body">
+            <p class="event-title">팀 프로젝트 회의</p>
+            <p class="event-time">16:00 – 17:00</p>
+          </div>
+        </li>
+      </ul>
+
+      <form class="add-form" id="addForm">
+        <input class="input" id="eventTitle" type="text" placeholder="새 일정 제목" autocomplete="off">
+        <div class="row">
+          <input class="input" id="eventStart" type="time" aria-label="시작 시간">
+          <input class="input" id="eventEnd" type="time" aria-label="끝 시간">
+        </div>
+        <button class="btn btn-primary" type="submit">일정 추가</button>
+      </form>
+    </aside>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
