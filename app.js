@@ -678,9 +678,3 @@ renderCategories();
 render();
 if (firebaseConfig) startFirebase();
 else startLocal();
-
-// 홈 화면에 설치할 수 있게 하고, 인터넷이 없어도 앱이 열리게 한다.
-// (HTTPS 주소나 localhost에서만 동작한다.)
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
-}

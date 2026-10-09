@@ -5,11 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>공유 캘린더</title>
   <meta name="description" content="카테고리와 메모로 일정을 정리하고 함께 보는 캘린더">
-  <meta name="theme-color" content="#1f8a5b">
+  <!-- PWA: 앱 정보(이름·아이콘·테마색). 경로는 모두 상대 경로 -->
+  <meta name="theme-color" content="#fffff0">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <!-- 아이폰: 홈 화면 아이콘과 주소창 없는 전체 화면 -->
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="캘린더">
@@ -83,5 +85,14 @@
   </main>
 
   <script type="module" src="app.js"></script>
+  <script>
+    // 서비스 워커 등록: 모든 파일을 저장해 두어 인터넷 없이도 열리고, 홈 화면에 설치할 수 있게 한다.
+    // (HTTPS 주소나 localhost에서만 동작한다.)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js').catch(() => {});
+      });
+    }
+  </script>
 </body>
 </html>

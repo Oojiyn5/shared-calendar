@@ -1,5 +1,5 @@
 :root {
-  --bg: #f5f7f4;
+  --bg: #fffff0;
   --card: #ffffff;
   --line: #e3e8e2;
   --text: #1c2420;
@@ -33,7 +33,7 @@ button, input { font: inherit; color: inherit; }
   justify-content: space-between;
   padding: 14px 24px;
   padding-top: max(14px, env(safe-area-inset-top));
-  background: var(--card);
+  background: var(--bg);
   border-bottom: 1px solid var(--line);
 }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; }
@@ -334,7 +334,7 @@ select.input { cursor: pointer; }
   .top-actions .btn { padding: 8px 12px; }
   .auth-panel { margin: 24px 16px; }
   .layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 12px;
     padding: 12px;
   }

@@ -18,7 +18,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE = os.path.join(ROOT, 'data.json')
 STATIC_FILES = {'/': 'index.html'}
 STATIC_FILES.update({'/' + name: name for name in [
-    'index.html', 'app.js', 'style.css', 'sw.js', 'manifest.webmanifest', 'firebase-config.js',
+    'index.html', 'app.js', 'style.css', 'service-worker.js', 'manifest.webmanifest', 'firebase-config.js',
     'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png', 'icons/favicon-32.png',
 ]})
 LOCAL_CLIENTS = {'127.0.0.1', '::1'}
