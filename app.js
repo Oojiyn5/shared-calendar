@@ -1,8 +1,9 @@
-// 2단계: 날짜 선택, 일정 추가·삭제, 카테고리(이름 + 색), 메모, 브라우저(localStorage)에 저장.
-// 여러 사람이 함께 보는 공유 기능은 다음 단계에서 붙인다.
+// 3단계: 일정·카테고리를 공유 서버(server.py)에 저장해서 같은 Wi-Fi의 기기끼리 함께 본다.
+// 다른 기기에서 바꾼 내용은 몇 초마다 서버에 물어봐서 반영한다.
 
-const STORAGE_KEY = 'shared-calendar-events';
-const CATEGORY_KEY = 'shared-calendar-categories';
+const OLD_EVENTS_KEY = 'shared-calendar-events';
+const OLD_CATEGORIES_KEY = 'shared-calendar-categories';
+const SYNC_INTERVAL = 3000;
 const PALETTE = ['#1f8a5b', '#3b6fd8', '#d64545', '#e08a1e', '#8a4fd6', '#d6458f', '#1a9aa8', '#8a6a45'];
 const NO_CATEGORY_COLOR = '#9aa59f';
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
@@ -22,34 +23,84 @@ const catList = document.getElementById('catList');
 const catForm = document.getElementById('catForm');
 const catNameInput = document.getElementById('catName');
 const swatches = document.getElementById('swatches');
+const syncStatus = document.getElementById('syncStatus');
 
 const today = new Date();
 let viewYear = today.getFullYear();
 let viewMonth = today.getMonth();
 let selected = new Date(viewYear, viewMonth, today.getDate());
 
-// 일정은 날짜 키("2026-10-09")별 배열로, 카테고리는 [{ id, name, color }] 배열로 저장한다.
-let events = load(STORAGE_KEY, {});
-let categories = load(CATEGORY_KEY, []);
+// 서버가 가진 내용을 그대로 들고 있는다. 일정은 날짜 키("2026-10-09")별 배열.
+let events = {};
+let categories = [];
+let version = -1;
 
-function load(key, fallback) {
+async function api(method, path, body) {
+  const res = await fetch(path, {
+    method,
+    headers: body ? { 'Content-Type': 'application/json' } : {},
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `서버 오류 (${res.status})`);
+  setOnline(true);
+  return data;
+}
+
+// 서버 응답(전체 데이터)을 화면에 반영한다. 바뀐 게 없으면 다시 그리지 않는다.
+function apply(data) {
+  if (data.version === version) return;
+  version = data.version;
+  events = data.events;
+  const categoriesChanged = JSON.stringify(data.categories) !== JSON.stringify(categories);
+  categories = data.categories;
+  // 카테고리 칸은 바뀌었을 때만 다시 그린다. 고르던 색이 몇 초마다 풀리지 않게.
+  if (categoriesChanged) renderCategories();
+  render();
+}
+
+function setOnline(online) {
+  syncStatus.classList.toggle('offline', !online);
+  syncStatus.textContent = online ? '공유 중' : '연결 끊김';
+  syncStatus.title = online
+    ? '같은 Wi-Fi의 기기와 일정을 함께 보고 있어요.'
+    : '서버(server.py)에 연결할 수 없어요. PC에서 서버가 켜져 있는지 확인해 주세요.';
+}
+
+async function sync() {
   try {
-    return JSON.parse(localStorage.getItem(key)) || fallback;
+    apply(await api('GET', '/api/data'));
   } catch {
-    return fallback;
+    setOnline(false);
   }
 }
 
-function save(key, value) {
+// 공유 기능 전에 이 브라우저에만 저장했던 일정·카테고리를 서버로 옮긴다.
+async function importOldData() {
+  let oldEvents;
+  let oldCategories;
   try {
-    localStorage.setItem(key, JSON.stringify(value));
+    oldEvents = JSON.parse(localStorage.getItem(OLD_EVENTS_KEY));
+    oldCategories = JSON.parse(localStorage.getItem(OLD_CATEGORIES_KEY));
   } catch {
-    // 저장이 막힌 환경(사생활 보호 모드 등)에서는 화면에만 남긴다.
+    return;
+  }
+  if (!oldEvents && !oldCategories) return;
+
+  apply(await api('POST', '/api/import', { events: oldEvents || {}, categories: oldCategories || [] }));
+  try {
+    localStorage.removeItem(OLD_EVENTS_KEY);
+    localStorage.removeItem(OLD_CATEGORIES_KEY);
+  } catch {
+    // 지우지 못해도 서버가 같은 id는 건너뛰므로 다음에 다시 옮겨도 중복되지 않는다.
   }
 }
 
-function newId() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+function showError(err) {
+  alert(err.message === 'Failed to fetch' || err.name === 'TypeError'
+    ? '서버에 연결할 수 없어서 저장하지 못했어요.'
+    : err.message);
+  sync();
 }
 
 function dateKey(d) {
@@ -241,6 +292,19 @@ function selectDate(date) {
   render();
 }
 
+// 저장하는 동안 버튼을 잠가서 두 번 눌러도 한 번만 들어가게 한다.
+async function whileSending(form, task) {
+  const button = form.querySelector('button[type="submit"]');
+  button.disabled = true;
+  try {
+    await task();
+  } catch (err) {
+    showError(err);
+  } finally {
+    button.disabled = false;
+  }
+}
+
 function addEvent(e) {
   e.preventDefault();
   const title = titleInput.value.trim();
@@ -258,35 +322,25 @@ function addEvent(e) {
     return;
   }
 
-  const key = dateKey(selected);
-  const list = events[key] || [];
-  list.push({
-    id: newId(),
-    title,
-    categoryId: categorySelect.value,
-    start,
-    end: start ? end : '',
-    memo: memoInput.value.trim(),
+  whileSending(addForm, async () => {
+    apply(await api('POST', '/api/events', {
+      date: dateKey(selected),
+      event: { title, categoryId: categorySelect.value, start, end, memo: memoInput.value },
+    }));
+    // 같은 카테고리로 이어서 입력하기 쉽게 카테고리는 남겨 둔다.
+    const keepCategory = categorySelect.value;
+    addForm.reset();
+    categorySelect.value = keepCategory;
+    titleInput.focus();
   });
-  // 하루 종일 일정이 먼저, 그다음 시작 시간 순.
-  list.sort((a, b) => (a.start || '').localeCompare(b.start || ''));
-  events[key] = list;
-  save(STORAGE_KEY, events);
-
-  // 같은 카테고리로 이어서 입력하기 쉽게 카테고리는 남겨 둔다.
-  const keepCategory = categorySelect.value;
-  addForm.reset();
-  categorySelect.value = keepCategory;
-  titleInput.focus();
-  render();
 }
 
-function deleteEvent(id) {
-  const key = dateKey(selected);
-  events[key] = eventsOn(selected).filter((ev) => ev.id !== id);
-  if (events[key].length === 0) delete events[key];
-  save(STORAGE_KEY, events);
-  render();
+async function deleteEvent(id) {
+  try {
+    apply(await api('DELETE', `/api/events/${dateKey(selected)}/${encodeURIComponent(id)}`));
+  } catch (err) {
+    showError(err);
+  }
 }
 
 function addCategory(e) {
@@ -304,28 +358,22 @@ function addCategory(e) {
   }
 
   const color = swatches.querySelector('input:checked')?.value || PALETTE[0];
-  const cat = { id: newId(), name, color };
-  categories.push(cat);
-  save(CATEGORY_KEY, categories);
-
-  catForm.reset();
-  renderCategories();
-  categorySelect.value = cat.id; // 방금 만든 카테고리로 바로 일정을 넣을 수 있게
-  render();
+  whileSending(catForm, async () => {
+    const data = await api('POST', '/api/categories', { name, color });
+    catForm.reset();
+    apply(data);
+    categorySelect.value = data.created.id; // 방금 만든 카테고리로 바로 일정을 넣을 수 있게
+  });
 }
 
-function deleteCategory(id) {
+async function deleteCategory(id) {
   const cat = categories.find((c) => c.id === id);
-  if (!confirm(`'${cat.name}' 카테고리를 지울까요?\n이 카테고리의 일정은 지워지지 않고 '카테고리 없음'이 돼요.`)) return;
-
-  categories = categories.filter((c) => c.id !== id);
-  Object.values(events).forEach((list) => list.forEach((ev) => {
-    if (ev.categoryId === id) ev.categoryId = '';
-  }));
-  save(CATEGORY_KEY, categories);
-  save(STORAGE_KEY, events);
-  renderCategories();
-  render();
+  if (!confirm(`'${cat.name}' 카테고리를 지울까요?\n이 카테고리의 일정은 지워지지 않고 '카테고리 없음'이 돼요.\n다른 기기에서도 함께 지워져요.`)) return;
+  try {
+    apply(await api('DELETE', `/api/categories/${encodeURIComponent(id)}`));
+  } catch (err) {
+    showError(err);
+  }
 }
 
 document.getElementById('prevMonth').addEventListener('click', () => {
@@ -346,6 +394,16 @@ startInput.addEventListener('input', () => endInput.setCustomValidity(''));
 catNameInput.addEventListener('input', () => catNameInput.setCustomValidity(''));
 addForm.addEventListener('submit', addEvent);
 catForm.addEventListener('submit', addCategory);
+// 휴대폰에서 다른 앱을 보다가 돌아오면 바로 새 내용을 받아온다.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') sync();
+});
 
 renderCategories();
 render();
+importOldData().catch(() => {}).finally(() => {
+  sync();
+  setInterval(() => {
+    if (document.visibilityState === 'visible') sync();
+  }, SYNC_INTERVAL);
+});

@@ -43,6 +43,25 @@ button, input { font: inherit; color: inherit; }
   font-size: 15px;
 }
 
+.top-actions { display: flex; align-items: center; gap: 10px; }
+
+/* 공유 서버 연결 상태 */
+.sync {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--green);
+  white-space: nowrap;
+}
+.sync::before {
+  content: "";
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.sync.offline { color: var(--red); }
+
 /* 레이아웃: PC는 달력 + 오른쪽 패널 */
 .layout {
   display: grid;
@@ -198,6 +217,7 @@ button, input { font: inherit; color: inherit; }
 }
 .btn-primary { background: var(--green); color: #fff; }
 .btn-primary:hover { filter: brightness(1.08); }
+.btn:disabled { opacity: 0.6; cursor: wait; }
 .btn-ghost { background: none; border-color: var(--line); }
 .btn-ghost:hover { border-color: var(--green); color: var(--green); }
 
