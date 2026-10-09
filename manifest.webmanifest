@@ -1,0 +1,18 @@
+{
+  "name": "공유 캘린더",
+  "short_name": "캘린더",
+  "description": "카테고리와 메모로 일정을 정리하고 함께 보는 캘린더",
+  "lang": "ko",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f5f7f4",
+  "theme_color": "#1f8a5b",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

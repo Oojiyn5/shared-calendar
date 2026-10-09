@@ -19,7 +19,11 @@ from urllib.parse import urlparse
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE = os.path.join(ROOT, 'data.json')
-STATIC_FILES = {'/': 'index.html', '/index.html': 'index.html', '/app.js': 'app.js', '/style.css': 'style.css'}
+STATIC_FILES = {'/': 'index.html'}
+STATIC_FILES.update({'/' + name: name for name in [
+    'index.html', 'app.js', 'style.css', 'sw.js', 'manifest.webmanifest',
+    'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png', 'icons/favicon-32.png',
+]})
 
 DATE_RE = re.compile(r'^\d{4}-\d{2}-\d{2}$')
 TIME_RE = re.compile(r'^(\d{2}:\d{2})?$')
@@ -175,6 +179,16 @@ def import_local(data, body):
 
 
 class Handler(SimpleHTTPRequestHandler):
+    # Windows는 PC 설정에 따라 .js를 text/plain으로 보내기도 해서 서비스 워커가 거부된다. 직접 정해 둔다.
+    extensions_map = {
+        **SimpleHTTPRequestHandler.extensions_map,
+        '.html': 'text/html; charset=utf-8',
+        '.js': 'text/javascript; charset=utf-8',
+        '.css': 'text/css; charset=utf-8',
+        '.webmanifest': 'application/manifest+json',
+        '.png': 'image/png',
+    }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=ROOT, **kwargs)
 

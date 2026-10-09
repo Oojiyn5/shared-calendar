@@ -19,6 +19,8 @@ body {
   background: var(--bg);
   color: var(--text);
   line-height: 1.5;
+  /* 아이폰 홈 화면 앱: 아래쪽 홈 막대에 내용이 가리지 않게 */
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 button, input { font: inherit; color: inherit; }
@@ -61,6 +63,7 @@ button, input { font: inherit; color: inherit; }
   background: currentColor;
 }
 .sync.offline { color: var(--red); }
+.sync.local { color: var(--blue); }
 
 /* 레이아웃: PC는 달력 + 오른쪽 패널 */
 .layout {
