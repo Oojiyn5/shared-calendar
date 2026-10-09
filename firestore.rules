@@ -1,0 +1,58 @@
+rules_version = '2';
+
+// Firebase 콘솔 → Firestore Database → 규칙 탭에 이 내용을 그대로 붙여 넣고 [게시]한다.
+//
+// 허용 목록: Firestore의 members 컬렉션에 "문서 ID = 이메일"인 문서가 있는 Google 계정만
+// 캘린더를 보고 고칠 수 있다. 사람을 추가·삭제할 때는 콘솔에서 members 문서만 추가·삭제하면 된다.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isMember() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/members/$(request.auth.token.email));
+    }
+
+    function validTime(t) {
+      return t is string && t.matches('^([0-9]{2}:[0-9]{2})?$');
+    }
+
+    function validEvent(d) {
+      return d.keys().hasOnly(['date', 'title', 'categoryId', 'start', 'end', 'memo', 'createdBy'])
+        && d.date is string && d.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && d.title is string && d.title.size() > 0 && d.title.size() <= 60
+        && d.categoryId is string && d.categoryId.size() <= 32
+        && validTime(d.start) && validTime(d.end)
+        && d.memo is string && d.memo.size() <= 500
+        && d.createdBy is string && d.createdBy.size() <= 100;
+    }
+
+    function validCategory(d) {
+      return d.keys().hasOnly(['name', 'color', 'order'])
+        && d.name is string && d.name.size() > 0 && d.name.size() <= 12
+        && d.color is string && d.color.matches('^#[0-9a-fA-F]{6}$')
+        && d.order is number;
+    }
+
+    // 허용 목록은 콘솔에서만 고친다. 앱은 "내가 목록에 있는지"만 확인한다.
+    match /members/{email} {
+      allow read: if request.auth != null && request.auth.token.email == email;
+      allow write: if false;
+    }
+
+    match /calendars/{calendarId} {
+      allow read: if isMember();
+      allow write: if isMember() && request.resource.data.keys().hasOnly(['importedPcServer']);
+
+      match /events/{eventId} {
+        allow read, delete: if isMember();
+        allow create, update: if isMember() && validEvent(request.resource.data);
+      }
+
+      match /categories/{categoryId} {
+        allow read, delete: if isMember();
+        allow create, update: if isMember() && validCategory(request.resource.data);
+      }
+    }
+  }
+}

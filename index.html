@@ -23,12 +23,21 @@
       <span class="brand-name">공유 캘린더</span>
     </div>
     <div class="top-actions">
-      <span class="sync offline" id="syncStatus" role="status">연결 중…</span>
+      <span class="sync wait" id="syncStatus" role="status">불러오는 중…</span>
       <button class="btn btn-ghost" id="todayBtn" type="button">오늘</button>
+      <button class="btn btn-ghost" id="signOutBtn" type="button" hidden>로그아웃</button>
     </div>
   </header>
 
-  <main class="layout">
+  <section class="auth-panel card" id="authPanel" aria-live="polite" hidden>
+    <img src="icons/icon-192.png" alt="" width="72" height="72">
+    <h2 class="auth-title">공유 캘린더</h2>
+    <p class="auth-message" id="authMessage"></p>
+    <button class="btn btn-primary" id="signInBtn" type="button">Google로 로그인</button>
+    <button class="btn btn-ghost" id="switchAccountBtn" type="button" hidden>다른 계정으로 로그인</button>
+  </section>
+
+  <main class="layout" id="calendarApp">
     <section class="calendar card" aria-label="월간 달력">
       <div class="month-nav">
         <button class="icon-btn" id="prevMonth" type="button" aria-label="이전 달">‹</button>
@@ -73,6 +82,6 @@
     </aside>
   </main>
 
-  <script src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
